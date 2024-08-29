@@ -1,3 +1,5 @@
+import path from "path";
+import { unlinkSync } from "fs";
 import asyncHandler from "../middleware/asyncHandler.js";
 import Product from "../models/Product.js";
 
@@ -68,4 +70,31 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 });
 
-export { getProducts, getProductById, createProduct, updateProduct };
+// @desc    Delete a product
+// @route   DELETE /api/products/:id
+// @access  Private/Admin
+const deleteProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (product) {
+    //Find and remove the image
+    const __dirname = path.resolve();
+    if (product.image.startsWith("/uploads")) {
+      unlinkSync(path.join(__dirname, product.image));
+    }
+
+    await Product.deleteOne({ _id: product._id });
+    res.json({ message: "Product Deleted!" });
+  } else {
+    res.status(404);
+    throw new Error("Product Not Found");
+  }
+});
+
+export {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+};
